@@ -31,7 +31,7 @@ uint8_t display_init_sequence[] = {
 
 static void display_init(void) {
 
-    busio_spi_obj_t *spi = common_hal_board_create_spi(0);
+    busio_spi_obj_t *spi = inline_bus;
     fourwire_fourwire_obj_t *bus = &allocate_display_bus()->fourwire_bus;
 
     common_hal_busio_spi_construct(
