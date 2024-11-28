@@ -1,20 +1,15 @@
 // This file is part of the CircuitPython project: https://circuitpython.org
 //
-// SPDX-FileCopyrightText: Copyright (c) 2020 Scott Shawcroft for Adafruit Industries
+// SPDX-FileCopyrightText: Copyright (c) 2021 Scott Shawcroft for Adafruit Industries
 //
 // SPDX-License-Identifier: MIT
 
 #include "supervisor/board.h"
 #include "mpconfigboard.h"
-#include "shared-bindings/busio/SPI.h"
-#include "shared-bindings/fourwire/FourWire.h"
-#include "shared-bindings/microcontroller/Pin.h"
-#include "shared-bindings/microcontroller/Pin.h"
 #include "shared-module/displayio/__init__.h"
 #include "shared-module/displayio/mipi_constants.h"
-#include "shared-bindings/board/__init__.h"
 
-
+#define DELAY 0x80
 
 
 // display init sequence according to https://github.com/adafruit/Adafruit_CircuitPython_ST7789
@@ -30,67 +25,66 @@ uint8_t display_init_sequence[] = {
 };
 
 static void display_init(void) {
-
-    busio_spi_obj_t *spi = inline_bus;
     fourwire_fourwire_obj_t *bus = &allocate_display_bus()->fourwire_bus;
-
+    busio_spi_obj_t *spi = &bus->inline_bus;
     common_hal_busio_spi_construct(
         spi,
         &pin_GPIO2,    // CLK
         &pin_GPIO3,    // MOSI
         NULL,           // MISO not connected
-        false);         // Not half-duplex
+        false           // Not half-duplex
+        );
 
+    common_hal_busio_spi_never_reset(spi);
 
     bus->base.type = &fourwire_fourwire_type;
 
     common_hal_fourwire_fourwire_construct(
         bus,
         spi,
-        &pin_GPIO1,  // TFT_DC
-        NULL,  // TFT_CS not connected
-        &pin_GPIO0,  // TFT_RST
-        50000000, // Baudrate
-        1, // Polarity
-        1 // Phase
-
+        &pin_GPIO1,     // DC
+        NULL,     // CS not connected
+        &pin_GPIO0,    // RST
+        40000000,       // baudrate
+        1,              // polarity
+        1               // phase
         );
 
     busdisplay_busdisplay_obj_t *display = &allocate_display()->display;
     display->base.type = &busdisplay_busdisplay_type;
-
     common_hal_busdisplay_busdisplay_construct(
         display,
         bus,
-        240, // Width
-        240, // Height
-        0, // column start
-        0, // row start
-        180, // rotation
-        16, // Color depth
-        false, // Grayscale
-        false, // Pixels in a byte share a row
-        1, // bytes per cell
-        false, // reverse_pixels_in_byte
-        true, // reverse_pixels_in_word
-        MIPI_COMMAND_SET_COLUMN_ADDRESS, // set column command
-        MIPI_COMMAND_SET_PAGE_ADDRESS, // set row command
-        MIPI_COMMAND_WRITE_MEMORY_START, // write memory command
+        240,            // width (after rotation)
+        240,             // height (after rotation)
+        1,             // column start
+        1,              // row start
+        180,             // rotation
+        16,             // color depth
+        false,          // grayscale
+        false,          // pixels in a byte share a row. Only valid for depths < 8
+        1,              // bytes per cell. Only valid for depths < 8
+        false,          // reverse_pixels_in_byte. Only valid for depths < 8
+        true,           // reverse_pixels_in_word
+        MIPI_COMMAND_SET_COLUMN_ADDRESS,    // set column command
+        MIPI_COMMAND_SET_PAGE_ADDRESS,      // set row command
+        MIPI_COMMAND_WRITE_MEMORY_START,    // write memory command
         display_init_sequence,
         sizeof(display_init_sequence),
-        &pin_GPIO7, // backlight pin
+        NULL,    // backlight not connected
         NO_BRIGHTNESS_COMMAND,
-        1.0f, // brightness
-        false, // single_byte_bounds
-        false, // data_as_commands
-        true, // auto_refresh
-        60, // native_frames_per_second
-        true, // backlight_on_high
-        false, // SH1107_addressing
-        1000 // backlight pwm frequency
+        1.0f,           // brightness
+        false,          // single_byte_bounds
+        false,          // data_as_commands
+        true,           // auto_refresh
+        60,             // native_frames_per_second
+        true,           // backlight_on_high
+        false,          // SH1107_addressing
+        50000           // backlight pwm frequency
         );
 }
 
 void board_init(void) {
+    // Display
     display_init();
 }
