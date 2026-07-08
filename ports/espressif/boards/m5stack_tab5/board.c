@@ -464,7 +464,7 @@ void board_init(void) {
         vsync_back_porch,
         vsync_front_porch,
         pixel_clock_frequency
-    );
+        );
 
     // Create framebuffer display
     framebufferio_framebufferdisplay_obj_t *fb_display = &allocate_display()->framebuffer_display;
@@ -475,7 +475,7 @@ void board_init(void) {
         MP_OBJ_FROM_PTR(display),
         0,                      // rotation
         true                    // auto_refresh
-    );
+        );
 }
 
 // Use the MP_WEAK supervisor/shared/board.c versions of routines not defined here.
