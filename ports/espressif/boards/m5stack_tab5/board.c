@@ -321,7 +321,7 @@ void board_init(void) {
     } else if (has_st7123) {
         // ST7123 display
         bus_frequency = 965000000;
-        pixel_clock_frequency = 70000000;
+        pixel_clock_frequency = 80000000;
         init_sequence = st7123_init_sequence;  // ST7123 doesn't use init sequence
         init_sequence_len = sizeof(st7123_init_sequence);
         hsync_pulse_width = 2;
