@@ -292,31 +292,38 @@ void board_init(void) {
 
     // Set IO direction (bit 7 as output for LCD reset)
     write_buf[0] = PI4IO_REG_IO_DIR;
-    write_buf[1] = 0b01111111;
+    write_buf[1] = ~(1 << 4);
     common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
 
     // Set output high-impedance mode
     write_buf[0] = PI4IO_REG_OUT_H_IM;
-    write_buf[1] = 0b00000000;
+    write_buf[1] = 0x00;
     common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
 
     // Set pull select
     write_buf[0] = PI4IO_REG_PULL_SEL;
-    write_buf[1] = 0b01111111;
+    write_buf[1] = ~(1 << 4);
     common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
 
     // Enable pull resistors
     write_buf[0] = PI4IO_REG_PULL_EN;
-    write_buf[1] = 0b01111111;
+    write_buf[1] = ~(1 << 4);
     common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
 
     // Set output state (including LCD reset)
     write_buf[0] = PI4IO_REG_OUT_SET;
-    write_buf[1] = 0b01110110;
+    write_buf[1] = 0x00;
     common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
 
     // Small delay for reset to take effect
-    mp_hal_delay_ms(100);
+    mp_hal_delay_ms(20);
+
+    // Release LCD reset (pull high)
+    write_buf[1] = (1 << 4);
+    common_hal_busio_i2c_write(i2c, I2C_DEV_ADDR_PI4IOE1, write_buf, 2);
+
+    // Wait for display controller to boot up
+    mp_hal_delay_ms(120);
 
     // Probe I2C bus to detect which display is present
     bool has_goodix = common_hal_busio_i2c_probe(i2c, GOODIX_TOUCH_ADDRESS);
@@ -346,16 +353,16 @@ void board_init(void) {
         vsync_front_porch = 20;
     } else if (has_st7123) {
         // ST7123 display
-        bus_frequency = 965000000;
-        pixel_clock_frequency = 70000000;
+        bus_frequency = 730000000;
+        pixel_clock_frequency = 60000000;
         init_sequence = st7123_init_sequence;
         init_sequence_len = sizeof(st7123_init_sequence);
-        hsync_pulse_width = 2;
-        hsync_back_porch = 40;
+        hsync_pulse_width = 40;
+        hsync_back_porch = 140;
         hsync_front_porch = 40;
-        vsync_pulse_width = 2;
-        vsync_back_porch = 8;
-        vsync_front_porch = 220;
+        vsync_pulse_width = 20;
+        vsync_back_porch = 24;
+        vsync_front_porch = 200;
     } else {
         return;
     }
