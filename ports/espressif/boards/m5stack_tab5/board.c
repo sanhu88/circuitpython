@@ -232,7 +232,7 @@ static const uint8_t ili9881c_init_sequence[] = {
     0x29, 0x00,
 };
 
-{
+static const uint8_t st7123_init_sequence[] = {
     // Software Reset + 120ms delay
     0x01, 0x80, 120,
     // Vendor-specific register configuration
